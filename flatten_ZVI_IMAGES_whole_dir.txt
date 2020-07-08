@@ -1,0 +1,38 @@
+// modified with help from http://www.sussex.ac.uk/gdsc/intranet/pdfs/ImageJBatchProcessing.pdf
+// now doesn't care how many channels there are.  Just need to find a way to read the number of zeds too.
+//asks for input and output directories.  Best to create a separate output dir, but not necessary with the zvi if statement.
+//  In fact, could just change it....  DONE, now only want one dir for input and output.
+//Found it!  I can import the open image dimensions and specify the endpoitn for the MIP based on the number of slices!
+
+
+dir1 = getDirectory("Choose Source Directory ");
+//dir2 = getDirectory("Choose Destination Directory ");
+list = getFileList(dir1);
+setBatchMode(true);
+for (i=0; i<list.length; i++) {
+	 showProgress(i+1, list.length);
+	 filename = dir1 + list[i];
+	 if (endsWith(filename, "czi")) {
+//		 open(filename);
+run("Bio-Formats Importer", "open="+filename+" autoscale color_mode=Custom rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT series_0_channel_0_red=0 series_0_channel_0_green=0 series_0_channel_0_blue=255 series_0_channel_1_red=0 series_0_channel_1_green=255 series_0_channel_1_blue=0 series_0_channel_2_red=255 series_0_channel_2_green=0 series_0_channel_2_blue=0 series_0_channel_3_red=255 series_0_channel_3_green=255 series_0_channel_3_blue=255 view=Hyperstack stack_order=XYCZT"); 
+
+ // INSERT MACRO HERE
+title = getTitle();
+
+	rename("original");
+	Stack.getDimensions(width, height, channels, slices, frames);
+	zstack=slices; 
+//wait(2000);
+	run("Z Project...", "start=1 stop=slices projection=[Max Intensity]");
+
+	selectWindow("MAX_original");
+	Stack.setDisplayMode("composite");
+		 saveAs("TIFF", dir1+list[i]);
+		 close();
+		 close();
+ }
+}
+
+
+print("well, I think we gave them a damn");
+print("good thrashing there, what what?");

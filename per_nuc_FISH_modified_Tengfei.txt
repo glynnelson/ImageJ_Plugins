@@ -1,0 +1,95 @@
+//Macro for FISH telomere intensity analysis by Glyn Nelson
+//Assumes you input an RGB image with the telomeres in the red channel and the nuclear counterstain in the green channel.
+//  This macro will identify bright objects in the red channel of an RGB image that are within the bright objects of the green channel
+//It assumes levels for the two thresholds used to determine the object sizes
+//would be better with a method of manual adjustment for the nuclear threshold
+
+// inputs for the macro
+ 
+    Dialog.create("Telomere Intensity measurement");
+    Dialog.addMessage("This macro measures telomere intensities per nucleus. ");
+ Dialog.addMessage("");   
+ Dialog.addMessage("It asks you to open an image- please open your image as a merged RGB image with the ");
+    Dialog.addMessage("telomeres in the red channel and the nuclear counterstain in the green channel. ");
+ Dialog.addMessage("");   
+    Dialog.addMessage("Data for telomere fluorescence per nucleus are then saved in an excel file in the same folder as the image file. ");
+
+    Dialog.show();
+
+open();
+title = getTitle();
+run("Split Channels");
+wait(140);
+close();
+wait(140);
+rename("nuc");
+run("Put Behind [tab]");
+wait(140);
+rename("foci");
+wait(140);
+run("Merge Channels...", "red=[foci] green=[nuc] blue=*None* gray=*None* keep");
+
+selectWindow("foci");
+run("Hi Lo Indicator");
+run("Brightness/Contrast...");
+Stack.setChannel(1);
+waitForUser("Please adjust ch1 if necessary, apply, then press OK here.");
+Stack.setChannel(2);
+waitForUser("Please adjust ch1 if necessary, apply, then press OK here.");
+//Dialog.create("User input required");
+//Dialog.addMessage("Please adjust minimum signal to remove non telomeric fluorescence if necessary, then press 'Apply'...");   
+//    Dialog.show();
+//print("Please adjust minimum signal to remove non telomereic fluorescence if necessary, then press 'Apply'...");
+//wait(12000);
+//run("Apply LUT");
+run("Put Behind [tab]");
+wait(140);
+
+selectWindow("RGB");
+
+selectWindow("nuc");
+//setAutoThreshold();
+run("Threshold...");
+waitForUser("Now please adjust threshold to highlight nuclear signal, apply the threshold, then press OK here,");
+//Dialog.create("User input required");
+//Dialog.addMessage("Now please adjust threshold to highlight nuclear signal, then press 'Apply'...");   
+//    Dialog.show();
+//print("Now please adjust threshold to highlight nuclear signal, then press 'Apply'...");
+//wait(12000);
+//setThreshold(102, 255);
+run("Fill Holes");
+
+setForegroundColor(0, 0, 0);
+run("Invert LUT");
+setTool(20);
+//this is pointing to a specific button in the gui for flood fill.  Had to add in lut inverter to get tit to work- don't understand that.
+
+//Dialog.create("User input required");
+//Dialog.addMessage("Please remove unwanted nuclei by clicking on them");
+//Dialog.addMessage("- ignore small spots and those on the edge...");   
+//    Dialog.show();
+waitForUser("Please remove unwanted nuclei by clicking on them- ignore small spots and those on the edge.  Click OK when finished");
+//wait(30000);
+run("Convert to Mask");
+wait(140);
+
+run("Analyze Particles...", "size=20-300 circularity=0.00-1.00 show=Nothing exclude add");
+
+run("Put Behind [tab]");
+selectWindow("foci");
+wait(140);
+rename(title);
+run("Set Measurements...", "display area integrated redirect=None decimal=3");
+roiManager("Measure");
+String.copyResults();
+roiManager("Delete");
+selectWindow("Results");
+saveAs("Measurements", getDirectory("current")+"FISHanalysis_per_nuc"+ substring(title,0) +".xls");
+
+close();
+close();
+close();
+
+run("Clear Results");
+
+
